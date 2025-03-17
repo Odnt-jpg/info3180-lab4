@@ -97,28 +97,9 @@ def add_header(response):
 def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
-@app.route('/upload', methods=['POST', 'GET'])
-def upload():
-    form = UploadForm()
-    if form.validate_on_submit():
-        filename = secure_filename(form.file.data.filename)
-        form.file.data.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        flash('File Saved', 'success')
-        return redirect(url_for('display_images'))
-    return render_template('upload.html', form=form)
 
-@app.route('/login', methods=['POST', 'GET'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = UserProfile.query.filter_by(username=form.username.data).first()
-        if user and check_password_hash(user.password, form.password.data):
-            login_user(user)
-            flash('Login Successfully', 'success')
-            return redirect(url_for("upload"))
-        else:
-            flash('Invalid Login', 'Error')
-    return render_template("login.html", form=form)
+
+
 
 @app.route('/display_images')
 def display_images():
