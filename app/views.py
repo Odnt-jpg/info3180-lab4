@@ -43,17 +43,14 @@ def login():
 
     # change this to actually validate the entire form submission
     # and not just one field
-    if form.username.data:
-        # Get the username and password values from the form.
-
-        # Using your model, query database for a user based on the username
-        # and password submitted. Remember you need to compare the password hash.
-        # You will need to import the appropriate function to do so.
-        # Then store the result of that query to a `user` variable so it can be
-        # passed to the login_user() method below.
-
-        # Gets user id, load into session
-        login_user(user)
+    if form.validate_on_submit():
+        user = UserProfile.query.filter_by(username = form.username.data).first()
+        if user and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            flash('Login Successfully', 'success')
+            return redirect(url_for("upload"))
+        else:
+            flash('Invalid Login', 'Error')
 
         # Remember to flash a message to the user
         return redirect(url_for("home"))  # The user should be redirected to the upload form instead
@@ -100,3 +97,30 @@ def add_header(response):
 def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
+@app.route('/upload', methods=['POST', 'GET'])
+def upload():
+    form = UploadForm()
+    if form.validate_on_submit():
+        filename = secure_filename(form.file.data.filename)
+        form.file.data.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        flash('File Saved', 'success')
+        return redirect(url_for('display_images'))
+    return render_template('upload.html', form=form)
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = UserProfile.query.filter_by(username=form.username.data).first()
+        if user and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            flash('Login Successfully', 'success')
+            return redirect(url_for("upload"))
+        else:
+            flash('Invalid Login', 'Error')
+    return render_template("login.html", form=form)
+
+@app.route('/display_images')
+def display_images():
+    images = os.listdir(app.config['UPLOAD_FOLDER'])
+    return render_template('display_images.html', images=images)
